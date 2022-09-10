@@ -14,3 +14,7 @@ how to play using this program :
   you cant enter either the recommended number or any other number.
   
   and the above steps repeat untill you get a BINGO (program terminates). 
+
+laguage used : python
+
+module used :  colorama 
