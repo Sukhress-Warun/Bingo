@@ -6,13 +6,13 @@ n = int(input("Enter length of the board : "))
 board = [[None for j in range(n)] for i in range(n)]
 
 # generating random matrix
-avail = set([(i, j) for j in range(n) for i in range(n)])
-c = 1
-while len(avail):
-    selected = random.choice(list(avail))
-    avail = avail - {selected}
-    board[selected[0]][selected[1]] = c
-    c += 1
+avail = set(range(1, n * n + 1))
+element_to_index = {}
+for i in range(n):
+    for j in range(n):
+        board[i][j] = random.choice(list(avail))
+        element_to_index[board[i][j]] = (i, j)
+        avail.remove(board[i][j])
 
 # displaying generated matrix
 for i in range(n):
@@ -22,89 +22,80 @@ for i in range(n):
 print()
 
 # initializing required data for game
-crossed = [[False for i in range(n)] for j in range(n)]
-priority = {i: 0 for i in range(1, n * n + 1)}
-conected = {i: 0 for i in range(1, n * n + 1)}
-striked = set()
+avail = set(range(1, n * n + 1))
+striked_row = {i: 0 for i in range(n)}
+striked_col = {i: 0 for i in range(n)}
+striked_main_diag = 0
+striked_sec_diag = 0
+
 
 # game loop
-while len(striked) < n * n:
+while len(avail) > 0:
+
+    # input for stricking numbers
     curr_stricked = list(map(int, input("Enter numbers to strike : ").split()))
 
     # strike the numbers
-    for i in range(n):
-        for j in range(n):
-            if board[i][j] in curr_stricked:
-                crossed[i][j] = True
-    striked |= set(curr_stricked)
+    for num in curr_stricked:
+        if num not in avail:
+            continue
+        avail.remove(num)
+        i, j = element_to_index[num]
+        striked_row[i] += 1
+        striked_col[j] += 1
+        if i == j:
+            striked_main_diag += 1
+        if i == n - j - 1:
+            striked_sec_diag += 1
 
     # display matrix
     for i in range(n):
         for j in range(n):
-            if crossed[i][j] == False:
+            if board[i][j] in avail:
                 print("%02d" % board[i][j], end=" ")
             else:
                 print((Fore.RED + "%02d" + Style.RESET_ALL) % board[i][j], end=" ")
         print()
 
-    # calc prority and check for bingo
+    # check for bingo
     bingo = 0
     for i in range(n):
-        row_crossed_count = crossed[i].count(True)
-        if row_crossed_count == n:
-            bingo += 1
-        elif row_crossed_count == 0:
-            continue
-        for j in range(n):
-            if crossed[i][j] == False:
-                priority[board[i][j]] = max(priority[board[i][j]], row_crossed_count)
-                conected[board[i][j]] = conected[board[i][j]] + 1
-    
-    zippedcross = list(zip(*crossed))
-    for i in range(n):
-        row_crossed_count = zippedcross[i].count(True)
-        if row_crossed_count == n:
-            bingo += 1
-        elif row_crossed_count == 0:
-            continue
-        for j in range(n):
-            if zippedcross[i][j] == False:
-                priority[board[j][i]] = max(priority[board[j][i]], row_crossed_count)
-                conected[board[j][i]] = conected[board[j][i]] + 1
-    
-    maind = sum([1 for i in range(n) if crossed[i][i]])
-    secd = sum([1 for i in range(n) if crossed[i][n - i - 1]])
-    if maind == n:
-        bingo += 1
-    if secd == n:
-        bingo += 1
-    if maind != 0:
-        for i in range(n):
-            if crossed[i][i] == False:
-                priority[board[i][i]] = max(priority[board[i][i]], maind)
-                conected[board[i][i]] = conected[board[i][i]] + 1
-    if secd != 0:
-        for i in range(n):
-            if crossed[i][n - i - 1] == False:
-                priority[board[i][n - i - 1]] = max(priority[board[i][n - i - 1]], secd)
-                conected[board[i][n - i - 1]] = conected[board[i][n - i - 1]] + 1
-    
-	# display recomended number
+        bingo += striked_row[i] == n
+        bingo += striked_col[i] == n
+    bingo += striked_main_diag == n
+    bingo += striked_sec_diag == n
+
     if bingo >= n:
         print(f"\n{Fore.YELLOW}BINGO{Style.RESET_ALL}")
         break
-    ma = 0
-    recom = 0
-    for i, j in priority.items():
-        if j > ma or (recom != 0 and j == ma and conected[i] > conected[recom]):
-            ma = j
-            recom = i
     
+    # calculating priority for each number
+    recomendation = -1
+    max_priority = -1
+    max_connections = -1
+    for i in range(n):
+        for j in range(n):
+            if board[i][j] in avail:
+                priority = 0
+                connections = 0
+                priority = max(priority, striked_row[i])
+                priority = max(priority, striked_col[j])
+                if i == j:
+                    priority = max(priority, striked_main_diag)
+                    connections += 1
+                if i == n - j - 1:
+                    priority = max(priority, striked_sec_diag)
+                    connections += 1
+                if priority > max_priority or (priority == max_priority and connections > max_connections):
+                    max_priority = priority
+                    max_connections = connections
+                    recomendation = board[i][j]
+    
+                
+	# display recomended number
     print("recomended number to strike next : ", end="")
-    print(f"{Fore.GREEN}{recom}{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}{recomendation}{Style.RESET_ALL}")
     print()
     
-    # reseting priority for next iteration
-    priority = {i: 0 for i in range(1, n*n+1)}
-    conected = {i: 0 for i in range(1, n*n+1)}
+   
 print("\nGood Game...! ")
