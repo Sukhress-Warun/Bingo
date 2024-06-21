@@ -3,7 +3,7 @@ Terminal based program to play bingo efficiently
 
 how to play using this program :
   
-  at first it generates a random N*N matrix which has numbers from 1 to N*N.
+  at first it generates a random N*N matrix which has numbers from 1 to N/*N.
   
   playing:
   
